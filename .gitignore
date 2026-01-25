@@ -1,11 +1,19 @@
-server_time.json
-mpvsocket
+# Config
 .vscode
+config.py
+
+# Media
 **.funscript
 **.mp4
-handy_mpv.py
+
+# Environment
+uv.lock
 venv/
-script_2x.py
-config.py
-handy_mpv.sh
+
+# Other stuff
 __pycache__
+mpvsocket
+server_time.json
+handy_mpv.py
+script_2x.py
+handy_mpv.sh
