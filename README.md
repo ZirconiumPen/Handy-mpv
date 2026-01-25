@@ -1,55 +1,38 @@
 # handy-mpv
 
-Simple script to play funscripts using mpv and the power of python.
+Simple script to play funscripts using `mpv` and the power of Python.
 
-## Shortcuts
+## Requirements
 
-```text
-Q : Quit application
+- Python
+- [`uv`](https://docs.astral.sh/uv/) package manager
+- A video and funscript with the same filename
 
-up arrow: pause script playback but keep video playing.
+## Installation
 
-down arrow: Re-sync script / restart script playback. use this if for some
-reason your script becomes out of sync.
-
-all other mpv shortcuts should work as inteded.
-
-```
-
-## Installation / requirements
-
-1. clone this repo
-2. create a virtualenv `python -m venv venv`
-3. activate venv `. venv/bin/activate`
-4. install dependencies `pip install -r requirements.txt`
-5. copy `config.py.example` to `config.py`, `cp config.py.example config.py`
-6. Setup your handy key in the `config.py` file.
+1. Clone this repo.
+1. Copy the config file: `$ cp config.py.example config.py`
+1. Set up your Handy key in the newly created `config.py` file.
 
 ```python
-# ...
-
 API_SECRET="YOUR KEY HERE"
 TIME_SYNC_FILE="/tmp/server_time.json"
-
-#...
 ```
 
 ## Usage
 
 ```bash
-# example usage
-$ python app.py yourscript {args}
+$ python main.py path/to/video.mp4 {args}
+```
 
-#arguments
+### Arguments
 
---double: doubles every stroke in the provided script (does not modify the
-actual file)
+```text
+--double: doubles every stroke in the provided script
+(does not modify the actual file)
 
-This option is mostly created for fapheroes. results may vary for normal
-scripts but sometimes creates very interesting results.
-
-for fapheroes however, this makes it so every beat is a full stroke. so
-assuming you have 4 beats such as:
+This option is mostly created for Fap Heroes, making every beat a full stroke.
+For example, if you have 4 beats,
 
 O---O---O---O
 
@@ -61,22 +44,30 @@ instead of:
 
 up---down---up---down
 
+This was created to more closely match the way
+I would play Fap Heroes without the Handy.
 
-this was created to more closely match the way I would play fapheroes without
-the handy.
-
+Results may vary for normal scripts but sometimes creates very interesting results.
 ```
 
-## aditional notes
+## Shortcuts
 
-- on startup, the script will do a time sync with the handy server to
-  insure accurate strokes. The server delay is stored in a file and the sync will
-  no re-happen for an hour after that.
-- on the first sync with the device. it is usually required to run the
-  script twice. if your video never starts. it's probably for this reason. simply
-  re-run the script.
-- pausing the video will pause the script. however, if you press the
-  resync button. the script will start playing with the video still paused.
-- scrubbing the player automatically scrubs the script to the appropriate
-  timestamp.
+- **Q**: Quit application
+- **Up arrow**: Pause script playback but keep video playing.
+- **Down arrow**: Re-sync script / restart script playback. Use this if
+for some reason your script becomes out of sync.
+
+All other mpv shortcuts should work as intended.
+
+## Notes
+
+- On startup, the script will do a time sync with the Handy server to
+ensure accurate strokes. The server delay is stored in a file and the sync will
+not re-happen for an hour after that.
+- If your video never starts when running the script for the first time,
+try running it a second time.
+- Pausing the video will pause the script. However, if you press the
+resync button, the script will start playing with the video still paused.
+- Scrubbing the player automatically scrubs the script to the appropriate
+timestamp.
 - If you have a looping video, the script will also loop.
