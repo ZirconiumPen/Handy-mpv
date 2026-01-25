@@ -1,13 +1,10 @@
 #!/usr/bin/python3
 
 import argparse
-import io
 import json
-import os
 import sys
-from datetime import datetime
 from os.path import exists
-from time import sleep, time_ns
+from time import time_ns
 
 import mpv
 import requests
@@ -98,7 +95,7 @@ def update_server_time():
 def find_script(video_path):
     video_name = video_path.replace("." + str.split(video_path, ".")[-1:][0], "")
     script_path = f"{video_name}.funscript"
-    if os.path.exists(script_path):
+    if exists(script_path):
         print(f"script found for video: {video_name}")
     return script_path
 
