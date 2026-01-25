@@ -69,14 +69,14 @@ the handy.
 
 ## aditional notes
 
-* on startup, the script will do a time sync with the handy server to
-insure accurate strokes. The server delay is stored in a file and the sync will
-no re-happen for an hour after that.
-* on the first sync with the device. it is usually required to run the
-script twice. if your video never starts. it's probably for this reason. simply
-re-run the script.
-* pausing the video will pause the script. however, if you press the
-resync button. the script will start playing with the video still paused.
-* scrubbing the player automatically scrubs  the script to the appropriate
-timestamp.
-* If you have a looping video, the script will also loop.
+- on startup, the script will do a time sync with the handy server to
+  insure accurate strokes. The server delay is stored in a file and the sync will
+  no re-happen for an hour after that.
+- on the first sync with the device. it is usually required to run the
+  script twice. if your video never starts. it's probably for this reason. simply
+  re-run the script.
+- pausing the video will pause the script. however, if you press the
+  resync button. the script will start playing with the video still paused.
+- scrubbing the player automatically scrubs the script to the appropriate
+  timestamp.
+- If you have a looping video, the script will also loop.
