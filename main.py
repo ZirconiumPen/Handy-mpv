@@ -9,10 +9,12 @@ from datetime import datetime
 from os.path import exists
 from time import sleep, time_ns
 
-import config
 import mpv
 import requests
 from mpv import ShutdownError
+
+import config
+
 from PIL import Image, ImageDraw, ImageFont
 
 API_SECRET = config.API_SECRET
@@ -135,7 +137,8 @@ def upload_script(script, double=False):
 
     if not double:
         r = requests.post(
-            "https://tugbud.kaffesoft.com/cache", files={"file": open(script, "rb")}
+            "https://tugbud.kaffesoft.com/cache",
+            files={"file": open(script, "rb")},
         )
     else:
         r = requests.post(
@@ -184,12 +187,12 @@ else:
 
 player = mpv.MPV(input_default_bindings=True, input_vo_keyboard=True, osc=True)
 player.play(args.file)
-# font = ImageFont.truetype('DejaVuSans.ttf', 40)
+font = ImageFont.truetype("DejaVuSans.ttf", 40)
 
 
-# overlay = player.create_image_overlay()
-# img = Image.new('RGBA', (400, 150),  (255, 255, 255, 0))
-# d = ImageDraw.Draw(img)
+overlay = player.create_image_overlay()
+img = Image.new("RGBA", (400, 150), (255, 255, 255, 0))
+d = ImageDraw.Draw(img)
 
 sync = 0
 
