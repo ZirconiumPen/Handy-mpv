@@ -97,7 +97,7 @@ def update_server_time():
     if time_syncs < 30:
         update_server_time()
     else:
-        print(f"we in sync, Average offset is: {time_sync_average_offset:d} ms")
+        print(f"we in sync, Average offset is: {time_sync_average_offset:.0f} ms")
         return
 
 
