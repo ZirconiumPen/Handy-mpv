@@ -12,7 +12,7 @@ import requests
 import config
 
 API_SECRET = config.API_SECRET
-API_ENDPOINT = "https://www.handyfeeling.com/api/handy/v2/"
+API_ENDPOINT = "https://www.handyfeeling.com/api/handy/v2"
 CACHE_URL = "https://tugbud.kaffesoft.com/cache"
 # CACHE_URL = "https://handyfeeling.com/api/sync/upload"
 
@@ -75,7 +75,7 @@ def update_server_time():
     global time_sync_initial_offset, time_sync_aggregate_offset, time_sync_average_offset, time_syncs
 
     send_time = get_time_ms()
-    r = requests.get(f"{API_ENDPOINT}servertime", headers=HEADERS)
+    r = requests.get(f"{API_ENDPOINT}/servertime", headers=HEADERS)
     data = json.loads(r.text)
     server_time = data["serverTime"]
     time_now = get_time_ms()
@@ -144,13 +144,13 @@ def upload_script(script, double=False):
     data = json.loads(r.text)
     print("uploading:", data)
     r = requests.put(
-        f"{API_ENDPOINT}hssp/setup", json={"url": data["url"]}, headers=HEADERS
+        f"{API_ENDPOINT}/hssp/setup", json={"url": data["url"]}, headers=HEADERS
     )
     data = json.loads(r.text)
 
 
 print("Getting Handy Status...")
-r = requests.get(f"{API_ENDPOINT}status", headers=HEADERS)
+r = requests.get(f"{API_ENDPOINT}/status", headers=HEADERS)
 data = json.loads(r.text)
 
 if not data["mode"]:
@@ -183,12 +183,12 @@ player.play(args.file)
 
 def sync_play(time_s=0.0, play=True):
     if not play:
-        r = requests.put(f"{API_ENDPOINT}hssp/stop", headers=HEADERS)
+        r = requests.put(f"{API_ENDPOINT}/hssp/stop", headers=HEADERS)
         return
     time_ms = int(time_s * SEC_TO_MS)
 
     payload = {"estimatedServerTime": get_server_time(), "startTime": time_ms}
-    r = requests.put(f"{API_ENDPOINT}hssp/play", json=payload, headers=HEADERS)
+    r = requests.put(f"{API_ENDPOINT}/hssp/play", json=payload, headers=HEADERS)
 
 
 def toggle_motion(is_enabled=True):
