@@ -1,3 +1,3 @@
 CONNECTION_KEY="HANDY CONNECTION KEY"
 APPLICATION_ID="dQw4w9WgXcQ"
-TIME_SYNC_FILE="/tmp/server_time.json"
+TIME_SYNC_FILE="/tmp/handy_mpv_server_time.json"

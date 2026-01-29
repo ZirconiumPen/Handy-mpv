@@ -7,16 +7,20 @@ Simple script to play funscripts using `mpv` and the power of Python.
 - Python
 - [`uv`](https://docs.astral.sh/uv/) package manager
 - A video and funscript with the same filename
+- A Handy Application ID
+  - You need [an account](https://user.handyfeeling.com/)
+  (sign up with email) to make one
 
 ## Installation
 
 1. Clone this repo.
 1. Copy the config file: `$ cp config.py.example config.py`
-1. Set up your Handy key in the newly created `config.py` file.
+1. Fill in CONNECTION_KEY and APPLICATION_ID in the newly created config file.
 
 ```python
-API_SECRET="YOUR KEY HERE"
-TIME_SYNC_FILE="/tmp/server_time.json"
+CONNECTION_KEY="YOUR KEY HERE"
+APPLICATION_ID="dQw4w9WgXcQ"
+TIME_SYNC_FILE="/tmp/handy_mpv_server_time.json"
 ```
 
 ## Usage
