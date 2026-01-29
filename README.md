@@ -75,3 +75,8 @@ resync button, the script will start playing with the video still paused.
 - Scrubbing the player automatically scrubs the script to the appropriate
 timestamp.
 - If you have a looping video, the script will also loop.
+
+## TODO
+
+- [ ] Use Funhalver and Fundoubler algorithms as options
+- [ ] Add support for Handy playback speed in response to MPV playback speed
