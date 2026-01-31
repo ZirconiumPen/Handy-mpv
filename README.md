@@ -26,7 +26,7 @@ TIME_SYNC_FILE="/tmp/handy_mpv_server_time.json"
 ## Usage
 
 ```bash
-$ python main.py path/to/video.mp4 {args}
+$ python main.py path/to/script.funscript {args}
 ```
 
 ### Arguments

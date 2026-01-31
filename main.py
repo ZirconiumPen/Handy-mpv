@@ -88,13 +88,13 @@ def calculate_client_server_offset(n_samples=30):
     return average_offset
 
 
-def find_script(video_path):
-    base_name = video_path.with_suffix("")
-    script_path = f"{base_name}.funscript"
-    if not isfile(script_path):
-        print(f"Script not found: {script_path}")
-        return None
-    return script_path
+def find_video(script_path):
+    base_name = script_path.with_suffix("")
+    # TODO: try prefixes
+    video_path = f"{base_name}.mp4"
+    if isfile(video_path):
+        return video_path
+    return None
 
 
 def script_2x(script_file):
@@ -160,21 +160,22 @@ if not check_connection():
 print("Handy connected!")
 
 parser = argparse.ArgumentParser(description="Handy MPV sync Utility")
-parser.add_argument("video_path", type=Path, help="The video file to play")
+parser.add_argument("script_path", type=Path, help="The script file to play")
 parser.add_argument("--double", action="store_true", help="Enable 2x speed conversion")
 args = parser.parse_args()
 
-video_name = str(args.video_path)
+script_name = str(args.script_path)
 
-if not isfile(args.video_path):
-    print(f"File not found: {video_name}")
+if not isfile(args.script_path):
+    print(f"Script not found: {script_name}")
     exit()
 
-script = find_script(args.video_path)
-if not script:
+video_name = find_video(args.script_path)
+if not video_name:
+    print("Video not found")
     exit()
-print(f"Script found: {script}")
-upload_script(script, args.double)
+print(f"Video found: {video_name}")
+upload_script(script_name, args.double)
 
 saved_time = get_saved_time()
 
