@@ -12,8 +12,3 @@ venv/
 
 # Other stuff
 __pycache__
-mpvsocket
-server_time.json
-handy_mpv.py
-script_2x.py
-handy_mpv.sh
