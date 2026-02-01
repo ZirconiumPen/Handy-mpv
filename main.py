@@ -221,8 +221,8 @@ if not check_connection():
     exit()
 logger.info("Handy connected!")
 
-parser = argparse.ArgumentParser(description="Handy MPV sync Utility")
-parser.add_argument("script_path", type=Path, help="The script file to play")
+parser = argparse.ArgumentParser(description="Handy MPV sync utility")
+parser.add_argument("script_path", type=Path, help="Script file to play")
 parser.add_argument("--double", action="store_true", help="Enable FunDoubler")
 parser.add_argument("--half", action="store_true", help="Enable FunHalver")
 args = parser.parse_args()
