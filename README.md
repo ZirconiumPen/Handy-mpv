@@ -29,31 +29,6 @@ TIME_SYNC_FILE="/tmp/handy_mpv_server_time.json"
 $ python main.py path/to/script.funscript {args}
 ```
 
-### Arguments
-
-```text
---double: doubles every stroke in the provided script
-(does not modify the actual file)
-
-This option is mostly created for Fap Heroes, making every beat a full stroke.
-For example, if you have 4 beats,
-
-O---O---O---O
-
-the resulting motion will be:
-
-up-down-up-down-up-down-up
-
-instead of:
-
-up---down---up---down
-
-This was created to more closely match the way
-I would play Fap Heroes without the Handy.
-
-Results may vary for normal scripts but sometimes creates very interesting results.
-```
-
 ## Shortcuts
 
 - **Q**: Quit application
@@ -68,10 +43,6 @@ All other mpv shortcuts should work as intended.
 - On startup, the script will do a time sync with the Handy server to
 ensure accurate strokes. The server delay is stored in a file and the sync will
 not re-happen for an hour after that.
-- If your video never starts when running the script for the first time,
-try running it a second time.
-- Pausing the video will pause the script. However, if you press the
-resync button, the script will start playing with the video still paused.
 - Scrubbing the player automatically scrubs the script to the appropriate
 timestamp.
 - If you have a looping video, the script will also loop.
@@ -81,3 +52,5 @@ the script will change with it.
 ## TODO
 
 - [ ] Use Funhalver and Fundoubler algorithms as options
+- [ ] Better support for multiple scripts (search for video)
+- [ ] Support for other video file extension (not just mp4)
