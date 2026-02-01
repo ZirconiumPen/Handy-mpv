@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(name)s: %(mess
 logger = logging.getLogger()
 
 
-API_ENDPOINT = "https://www.handyfeeling.com/api/handy-rest/v3"
+API_ENDPOINT = "https://www.handyfeeling.com/api/handy/v2"
 
 # Goes down the list until succeeding
 CACHE_URLS = [
@@ -31,10 +31,7 @@ CONNECT_TIMEOUT = 3
 READ_TIMEOUT = 10
 DEFAULT_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 
-HEADERS = {
-    "X-Connection-Key": config.CONNECTION_KEY,
-    "X-Api-Key": config.APPLICATION_ID,
-}
+HEADERS = {"X-Connection-Key": config.CONNECTION_KEY}
 
 HSSP_ID = 1
 
@@ -85,21 +82,17 @@ public_session = SessionWithTimeout()
 
 def check_connection():
     try:
-        r = api_session.get(f"{API_ENDPOINT}/mode")
+        r = api_session.get(f"{API_ENDPOINT}/status")
         r.raise_for_status()
         if not r.text.strip():
-            logger.error("Empty response from /mode endpoint")
+            logger.error("Empty response from /status endpoint")
             return False
         try:
             data = r.json()
         except ValueError:
-            logger.error("Invalid JSON from /mode endpoint: %r", r.text)
+            logger.error("Invalid JSON from /status endpoint: %r", r.text)
             return False
-        result = data.get("result")
-        if not isinstance(result, dict):
-            logger.error("Missing or invalid 'result' field: %r", data)
-            return False
-        mode = result.get("mode")
+        mode = data.get("mode")
         if not isinstance(mode, int):
             logger.error("Missing or invalid 'mode' field in response: %r", data)
             return False
@@ -107,7 +100,7 @@ def check_connection():
         if mode == HSSP_ID:
             return True
         logger.info("Switching mode from %d to %d", mode, HSSP_ID)
-        put_resp = api_session.put(f"{API_ENDPOINT}/mode2", json={"mode": HSSP_ID})
+        put_resp = api_session.put(f"{API_ENDPOINT}/mode", json={"mode": HSSP_ID})
         put_resp.raise_for_status()
         logger.info("Mode successfully updated")
         return True
@@ -157,7 +150,7 @@ def measure_offset():
 
     r = public_session.get(f"{API_ENDPOINT}/servertime")
     data = r.json()
-    server_time = data["server_time"]
+    server_time = data["serverTime"]
 
     receive_time = get_time_ms()
 
@@ -262,7 +255,6 @@ else:
     save_server_time()
 
 player = MPV(config=True, input_default_bindings=True, input_vo_keyboard=True, osc=True)
-current_speed = 1.0
 player.play(video_name)
 
 
@@ -276,9 +268,8 @@ def play_handy():
         time_s = 0
     time_ms = int(time_s * SEC_TO_MS)
     payload = {
-        "server_time": get_server_time(),
+        "estimatedServerTime": get_server_time(),
         "startTime": time_ms,
-        "playback_rate": current_speed,
     }
     api_session.put(f"{API_ENDPOINT}/hssp/play", json=payload)
 
@@ -312,14 +303,6 @@ def on_player_pause_changed(name, is_paused):
 
 player.observe_property("pause", on_player_pause_changed)
 
-
-def on_player_speed_changed(name, new_speed):
-    global current_speed
-    current_speed = new_speed
-    play_handy()
-
-
-player.observe_property("speed", on_player_speed_changed)
 
 try:
     player.wait_for_playback()

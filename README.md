@@ -1,4 +1,4 @@
-# handy-mpv
+# handy-mpv (Firmware 3)
 
 Simple script to play funscripts using `mpv` and the power of Python.
 
@@ -7,19 +7,15 @@ Simple script to play funscripts using `mpv` and the power of Python.
 - Python
 - [`uv`](https://docs.astral.sh/uv/) package manager
 - A video and funscript with the same filename
-- A Handy Application ID
-  - You need [an account](https://user.handyfeeling.com/)
-  (sign up with email) to make one
 
 ## Installation
 
 1. Clone this repo.
 1. Copy the config file: `$ cp config.py.example config.py`
-1. Fill in CONNECTION_KEY and APPLICATION_ID in the newly created config file.
+1. Fill in CONNECTION_KEY in the newly created config file.
 
 ```python
 CONNECTION_KEY="YOUR KEY HERE"
-APPLICATION_ID="dQw4w9WgXcQ"
 TIME_SYNC_FILE="/tmp/handy_mpv_server_time.json"
 ```
 
@@ -47,7 +43,8 @@ not re-happen for an hour after that.
 timestamp.
 - If you have a looping video, the script will also loop.
 - If you change MPV's playback rate (`[` and `]` by default),
-the script will change with it.
+the script will NOT change with it. Use the firmware 4 branch
+if you need this functionality.
 
 ## TODO
 
