@@ -2,26 +2,40 @@
 
 import argparse
 import json
+import logging
 from os.path import isfile
 from pathlib import Path
 from time import time_ns
 
 import mpv
-import requests
+from requests import RequestException, Session, Timeout
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 import config
 from utils import fundoubler, funhalver
 
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(name)s: %(message)s")
+logger = logging.getLogger()
+
+
 API_ENDPOINT = "https://www.handyfeeling.com/api/handy-rest/v3"
 
-# Two alternatives; if one doesn't work, try the other
-CACHE_URL = "https://handyfeeling.com/api/sync/upload"
-# CACHE_URL = "https://tugbud.kaffesoft.com/cache"
+# Goes down the list until succeeding
+CACHE_URLS = [
+    "https://tugbud.kaffesoft.com/cache",
+    "https://handyfeeling.com/api/sync/upload",
+]
+
+CONNECT_TIMEOUT = 3
+READ_TIMEOUT = 10
+DEFAULT_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 
 HEADERS = {
     "X-Connection-Key": config.CONNECTION_KEY,
     "X-Api-Key": config.APPLICATION_ID,
 }
+
 HSSP_ID = 1
 
 SEC_TO_MS = 10**3
@@ -29,6 +43,79 @@ SEC_TO_NS = 10**9
 RESYNC_COOLDOWN = 3600 * SEC_TO_NS
 
 client_server_offset = 0  # in milliseconds
+
+
+class SessionWithTimeout:
+    def __init__(self, headers=None, timeout=DEFAULT_TIMEOUT):
+        self._session = Session()
+        self._timeout = timeout
+
+        if headers:
+            self._session.headers.update(HEADERS)
+
+        retry = Retry(
+            total=3,
+            backoff_factor=0.5,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["GET", "PUT"],
+        )
+
+        adapter = HTTPAdapter(max_retries=retry)
+        self._session.mount("https://", adapter)
+
+    def request(self, method, url, **kwargs):
+        kwargs.setdefault("timeout", self._timeout)
+        return self._session.request(method, url, **kwargs)
+
+    def get(self, url, **kwargs):
+        return self.request("GET", url, **kwargs)
+
+    def post(self, url, **kwargs):
+        return self.request("POST", url, **kwargs)
+
+    def put(self, url, **kwargs):
+        return self.request("PUT", url, **kwargs)
+
+
+api_session = SessionWithTimeout(HEADERS)
+public_session = SessionWithTimeout()
+
+
+def check_connection():
+    try:
+        r = api_session.get(f"{API_ENDPOINT}/mode")
+        r.raise_for_status()
+        if not r.text.strip():
+            logger.error("Empty response from /mode endpoint")
+            return False
+        try:
+            data = r.json()
+        except ValueError:
+            logger.error("Invalid JSON from /mode endpoint: %r", r.text)
+            return False
+        result = data.get("result")
+        if not isinstance(result, dict):
+            logger.error("Missing or invalid 'result' field: %r", data)
+            return False
+        mode = result.get("mode")
+        if not isinstance(mode, int):
+            logger.error("Missing or invalid 'mode' field in response: %r", data)
+            return False
+        logger.debug("Current mode reported: %d", mode)
+        if mode == HSSP_ID:
+            return True
+        logger.info("Switching mode from %d to %d", mode, HSSP_ID)
+        put_resp = api_session.put(f"{API_ENDPOINT}/mode2", json={"mode": HSSP_ID})
+        put_resp.raise_for_status()
+        logger.info("Mode successfully updated")
+        return True
+    except Timeout:
+        logger.warning("Timeout while contacting API endpoint")
+    except RequestException:
+        logger.exception("Request error while checking connection")
+    except Exception:
+        logger.exception("Unexpected error in check_connection")
+    return False
 
 
 def get_time_ms():
@@ -66,7 +153,7 @@ def get_saved_time():
 def measure_offset():
     send_time = get_time_ms()
 
-    r = requests.get(f"{API_ENDPOINT}/servertime", headers=HEADERS)
+    r = public_session.get(f"{API_ENDPOINT}/servertime")
     data = r.json()
     server_time = data["server_time"]
 
@@ -80,11 +167,11 @@ def measure_offset():
 
 def calculate_client_server_offset(n_samples=30):
     # algorithm from https://www.handyfeeling.com/api/handy-rest/v3/docs/#/UTILS/getServerTime
-    print("Calculating offset...")
+    logger.info("Calculating offset...")
     aggregate_offset = 0
     for i in range(n_samples):
         aggregate_offset += measure_offset()
-        print(f"Sample {i}: aggregate offset = {aggregate_offset}ms")
+        logger.info("Sample %d: aggregate offset = %dms", i, aggregate_offset)
     average_offset = aggregate_offset / n_samples
     return average_offset
 
@@ -106,40 +193,33 @@ def mod_script(script_path, modifier):
 
 
 def upload_script(script):
-    r = requests.post(CACHE_URL, files={"file": script})
-    data = r.json()
-    url = data["url"]
-    print("Uploading:", url)
-    r = requests.put(f"{API_ENDPOINT}/hssp/setup", json={"url": url}, headers=HEADERS)
+    for cache_url in CACHE_URLS:
+        logger.info(f"Trying cache URL: %s", cache_url)
+        try:
+            r = public_session.post(cache_url, files={"file": script})
+            r.raise_for_status()
+            data = r.json()
+            url = data.get("url")
+            if not url:
+                logger.warning("No 'url' in response from %s", cache_url)
+                continue
+            logger.info("Received upload URL: %s", url)
+            r = api_session.put(f"{API_ENDPOINT}/hssp/setup", json={"url": url})
+            r.raise_for_status()
+            logger.info("Successfully uploaded script")
+            return True
+        except Timeout:
+            logger.warning("Timeout contacting %s", cache_url)
+        except RequestException:
+            logger.warning("Request error with %s", cache_url)
+    logger.error("All cache URLs failed")
+    return False
 
 
-def check_connection():
-    r = requests.get(f"{API_ENDPOINT}/mode", headers=HEADERS)
-    if r.status_code != 200:
-        print(f"Bad status: {r.status_code}")
-        return False
-    if not r.text.strip():
-        print("Empty response")
-        return False
-
-    try:
-        data = r.json()
-    except ValueError as e:
-        print(f"Invalid JSON: {r.text}")
-        return False
-
-    if data["result"]["mode"] != HSSP_ID:
-        r = requests.put(
-            f"{API_ENDPOINT}/mode2", json={"mode": HSSP_ID}, headers=HEADERS
-        )
-    return True
-
-
-print("Getting Handy status...")
+logger.info("Getting Handy status...")
 if not check_connection():
-    print("Couldn't sync with Handy, exiting...")
     exit()
-print("Handy connected!")
+logger.info("Handy connected!")
 
 parser = argparse.ArgumentParser(description="Handy MPV sync Utility")
 parser.add_argument("script_path", type=Path, help="The script file to play")
@@ -150,14 +230,14 @@ args = parser.parse_args()
 script_name = str(args.script_path)
 
 if not isfile(args.script_path):
-    print(f"Script not found: {script_name}")
+    logger.error("Script not found: %s", args.script_path)
     exit()
 
 video_name = find_video(args.script_path)
 if not video_name:
-    print("Video not found")
+    logger.error("Could not find video for script: %s", args.script_path)
     exit()
-print(f"Video found: {video_name}")
+logger.info(f"Video found: {video_name}")
 if args.double:
     script_to_use = mod_script(script_name, fundoubler)
 elif args.half:
@@ -165,7 +245,9 @@ elif args.half:
 else:
     script_to_use = open(script_name, "rb")
 
-upload_script(script_to_use)
+if not upload_script(script_to_use):
+    logger.error("Failed to upload script")
+    exit()
 
 saved_time = get_saved_time()
 
@@ -173,7 +255,7 @@ if time_ns() - saved_time["last_saved"] < RESYNC_COOLDOWN:
     client_server_offset = saved_time["client_server_offset"]
 else:
     client_server_offset = calculate_client_server_offset()
-    print(f"Syncing complete, new offset: {client_server_offset:.02f} ms")
+    logger.info(f"Syncing complete, new offset: %.02f ms", client_server_offset)
     save_server_time()
 
 player = mpv.MPV(
@@ -187,7 +269,7 @@ player.play(video_name)
 
 
 def stop_handy():
-    requests.put(f"{API_ENDPOINT}/hssp/stop", headers=HEADERS)
+    api_session.put(f"{API_ENDPOINT}/hssp/stop")
 
 
 def play_handy():
@@ -200,7 +282,7 @@ def play_handy():
         "startTime": time_ms,
         "playback_rate": current_speed,
     }
-    requests.put(f"{API_ENDPOINT}/hssp/play", json=payload, headers=HEADERS)
+    api_session.put(f"{API_ENDPOINT}/hssp/play", json=payload)
 
 
 @player.on_key_press("up")
