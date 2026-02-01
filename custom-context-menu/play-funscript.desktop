@@ -1,0 +1,23 @@
+[Desktop Entry]
+Type=Service
+MimeType=text/funscript;
+Actions=play;playDoubled;playHalved;
+X-KDE-Submenu=Play with HandyMPV
+
+[Desktop Action play]
+Name=Standard
+Icon=applications-multimedia
+# REPLACE THIS
+Exec=python /path/to/Handy-mpv/main.py %u
+
+[Desktop Action playDoubled]
+Name=Doubled
+Icon=applications-multimedia
+# REPLACE THIS
+Exec=python /path/to/Handy-mpv/main.py %u --double
+
+[Desktop Action playHalved]
+Name=Halved
+Icon=applications-multimedia
+# REPLACE THIS
+Exec=python /path/to/Handy-mpv/main.py %u --half
