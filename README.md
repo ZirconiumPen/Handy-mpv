@@ -52,5 +52,3 @@ the script will change with it.
 ## TODO
 
 - [ ] Use Funhalver and Fundoubler algorithms as options
-- [ ] Better support for multiple scripts (search for video)
-- [ ] Support for other video file extension (not just mp4)

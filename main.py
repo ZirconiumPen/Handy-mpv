@@ -42,6 +42,8 @@ SEC_TO_MS = 10**3
 SEC_TO_NS = 10**9
 RESYNC_COOLDOWN = 3600 * SEC_TO_NS
 
+VIDEO_EXTS = {".mp4", ".mkv", ".avi", ".mov", ".webm"}
+
 client_server_offset = 0  # in milliseconds
 
 
@@ -176,12 +178,13 @@ def calculate_client_server_offset(n_samples=30):
     return average_offset
 
 
-def find_video(script_path):
-    base_name = script_path.with_suffix("")
-    # TODO: try prefixes
-    video_path = f"{base_name}.mp4"
-    if isfile(video_path):
-        return video_path
+def find_video(script_path: Path):
+    directory = script_path.parent
+    prefix = script_path.stem.split(" (", 1)[0]
+    for p in directory.iterdir():
+        if p.is_file() and p.suffix.lower() in VIDEO_EXTS and p.stem.startswith(prefix):
+            return p
+    logger.error("Could not find video for script: %s" % script_path)
     return None
 
 
@@ -229,14 +232,14 @@ args = parser.parse_args()
 
 script_name = str(args.script_path)
 
-if not isfile(args.script_path):
+if not args.script_path.is_file():
     logger.error("Script not found: %s", args.script_path)
     exit()
 
-video_name = find_video(args.script_path)
-if not video_name:
-    logger.error("Could not find video for script: %s", args.script_path)
+video_path = find_video(args.script_path)
+if not video_path:
     exit()
+video_name = str(video_path)
 logger.info(f"Video found: {video_name}")
 if args.double:
     script_to_use = mod_script(script_name, fundoubler)
