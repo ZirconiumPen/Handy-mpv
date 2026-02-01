@@ -207,6 +207,7 @@ player = mpv.MPV(
     input_vo_keyboard=True,
     osc=True,
 )
+current_speed = 1.0
 player.play(video_name)
 
 
@@ -214,9 +215,16 @@ def stop_handy():
     requests.put(f"{API_ENDPOINT}/hssp/stop", headers=HEADERS)
 
 
-def play_handy(time_s=0.0):
+def play_handy():
+    time_s = player._get_property("playback-time")
+    if time_s is None:
+        time_s = 0
     time_ms = int(time_s * SEC_TO_MS)
-    payload = {"server_time": get_server_time(), "startTime": time_ms}
+    payload = {
+        "server_time": get_server_time(),
+        "startTime": time_ms,
+        "playback_rate": current_speed,
+    }
     requests.put(f"{API_ENDPOINT}/hssp/play", json=payload, headers=HEADERS)
 
 
@@ -227,8 +235,7 @@ def my_up_binding(*args):
 
 @player.on_key_press("down")
 def my_down_binding(*args):
-    time_s = player._get_property("playback-time")
-    play_handy(time_s)
+    play_handy()
 
 
 @player.on_key_press("q")
@@ -238,23 +245,26 @@ def my_q_binding(*args):
 
 @player.event_callback("playback-restart")
 def file_restart(event):
-    time_s = player._get_property("playback-time")
-    play_handy(time_s)
-    print(f"Now playing at {time_s:.02f}s")
+    play_handy()
 
 
-def video_pause_unpause(name, is_paused):
+def on_player_pause_changed(name, is_paused):
     if is_paused:
         stop_handy()
-        return
-    time_s = player._get_property("playback-time")
-    if time_s is None:
-        return
-    play_handy(time_s)
+    else:
+        play_handy()
 
 
-player.observe_property("pause", video_pause_unpause)
+player.observe_property("pause", on_player_pause_changed)
 
+
+def on_player_speed_changed(name, new_speed):
+    global current_speed
+    current_speed = new_speed
+    play_handy()
+
+
+player.observe_property("speed", on_player_speed_changed)
 
 try:
     player.wait_for_playback()
