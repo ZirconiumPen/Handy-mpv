@@ -7,7 +7,7 @@ from os.path import isfile
 from pathlib import Path
 from time import time_ns
 
-import mpv
+from mpv import MPV
 from requests import RequestException, Session, Timeout
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -258,12 +258,7 @@ else:
     logger.info(f"Syncing complete, new offset: %.02f ms", client_server_offset)
     save_server_time()
 
-player = mpv.MPV(
-    config=True,
-    input_default_bindings=True,
-    input_vo_keyboard=True,
-    osc=True,
-)
+player = MPV(config=True, input_default_bindings=True, input_vo_keyboard=True, osc=True)
 current_speed = 1.0
 player.play(video_name)
 
