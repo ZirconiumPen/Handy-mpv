@@ -10,6 +10,7 @@ import mpv
 import requests
 
 import config
+from utils import fundoubler, funhalver
 
 API_ENDPOINT = "https://www.handyfeeling.com/api/handy-rest/v3"
 
@@ -97,6 +98,13 @@ def find_video(script_path):
     return None
 
 
+def mod_script(script_path, modifier):
+    with open(script_path) as f:
+        script = json.loads(f.read())
+    script["actions"] = modifier(script["actions"])
+    return (script_path, json.dumps(script))
+
+
 def script_2x(script_file):
     with open(script_file) as f:
         script = json.loads(f.read())
@@ -122,9 +130,8 @@ def script_2x(script_file):
     return (script_file, json.dumps(script))
 
 
-def upload_script(script, double=False):
-    file_to_use = script_2x(script) if double else open(script, "rb")
-    r = requests.post(CACHE_URL, files={"file": file_to_use})
+def upload_script(script):
+    r = requests.post(CACHE_URL, files={"file": script})
     data = r.json()
     url = data["url"]
     print("Uploading:", url)
@@ -161,7 +168,8 @@ print("Handy connected!")
 
 parser = argparse.ArgumentParser(description="Handy MPV sync Utility")
 parser.add_argument("script_path", type=Path, help="The script file to play")
-parser.add_argument("--double", action="store_true", help="Enable 2x speed conversion")
+parser.add_argument("--double", action="store_true", help="Enable FunDoubler")
+parser.add_argument("--half", action="store_true", help="Enable FunHalver")
 args = parser.parse_args()
 
 script_name = str(args.script_path)
@@ -175,7 +183,14 @@ if not video_name:
     print("Video not found")
     exit()
 print(f"Video found: {video_name}")
-upload_script(script_name, args.double)
+if args.double:
+    script_to_use = mod_script(script_name, fundoubler)
+elif args.half:
+    script_to_use = mod_script(script_name, funhalver)
+else:
+    script_to_use = open(script_name, "rb")
+
+upload_script(script_to_use)
 
 saved_time = get_saved_time()
 
