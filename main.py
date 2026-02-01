@@ -105,31 +105,6 @@ def mod_script(script_path, modifier):
     return (script_path, json.dumps(script))
 
 
-def script_2x(script_file):
-    with open(script_file) as f:
-        script = json.loads(f.read())
-
-    edited = []
-    for action in script["actions"]:
-        action["pos"] = 0
-        edited.append(action)
-
-    final = []
-    for idx, action in enumerate(edited):
-        if action["pos"] == 95:
-            action["pos"] = 100
-        final.append(action)
-
-        if idx == len(edited) - 1:
-            break
-
-        new_pos = {"at": int((action["at"] + edited[idx + 1]["at"]) / 2), "pos": 100}
-        final.append(new_pos)
-
-    script["actions"] = final
-    return (script_file, json.dumps(script))
-
-
 def upload_script(script):
     r = requests.post(CACHE_URL, files={"file": script})
     data = r.json()
